@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grammar Royale</title>
+<style>
+:root{color-scheme:dark;--bg:#10151c;--card:#1b2430;--ink:#f2f5f8;--mut:#93a1b3;--acc:#ffb020;--ok:#2ecc71;--bad:#ff4d4f;--line:#2c394a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#26384f,var(--bg) 60%) fixed;color:var(--ink);font-family:"Arial Black",Impact,Verdana,sans-serif;display:flex;justify-content:center}
+.app{width:100%;max-width:560px;padding:12px}
+h1{text-align:center;font-size:34px;margin:10px 0 0;letter-spacing:1px;color:var(--acc);text-shadow:0 0 18px #ffb02088}
+.sub{text-align:center;color:var(--mut);font-family:Verdana,sans-serif;font-weight:normal;margin:4px 0 8px}
+button{font:inherit;cursor:pointer;color:var(--ink)}
+.zone{display:block;width:100%;text-align:left;background:var(--card);border:2px solid var(--line);border-left:6px solid var(--acc);border-radius:12px;padding:12px;margin-top:10px;font-size:17px}
+.zone small{display:block;color:var(--mut);font-family:Verdana,sans-serif;font-weight:normal;font-size:13px;margin-top:3px}
+.zone.big{background:linear-gradient(90deg,#c97a00,var(--acc));color:#111;font-size:22px;text-align:center;border:0}
+.hud{display:flex;gap:6px;font-size:14px;align-items:center}
+.pill{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:5px 10px;white-space:nowrap}
+.hp{flex:1;height:14px;background:var(--line);border-radius:8px;overflow:hidden}.hp i{display:block;height:100%;background:linear-gradient(90deg,var(--bad),var(--ok));transition:width .3s}
+.zt{height:8px;background:var(--line);border-radius:6px;margin-top:8px;overflow:hidden}.zt i{display:block;height:100%;width:100%;background:var(--acc)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px;margin-top:10px}
+.q{font-size:22px;line-height:1.4;text-align:center;margin:6px 0 12px}
+.tag{text-align:center;color:var(--acc);font-size:13px;letter-spacing:2px}
+.opt{display:block;width:100%;background:#243244;border:2px solid var(--line);border-radius:12px;padding:14px;margin:8px 0;font-size:20px;text-align:left}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.ok{background:var(--ok)!important;color:#08210f;border-color:var(--ok)!important}.bad{background:var(--bad)!important;border-color:var(--bad)!important}
+.line{min-height:54px;border-bottom:3px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px;padding:6px 0;margin:8px 0}
+.tile{padding:10px 13px;border-radius:10px;border:2px solid var(--acc);background:#243244;font-size:19px}
+.row{display:flex;gap:8px}.row .opt{text-align:center;font-size:36px}.row small{display:block;font-size:14px}
+.fb{margin-top:10px;padding:10px;border-radius:12px;background:#0d1219;border:2px solid var(--line);font-family:Verdana,sans-serif;font-weight:bold;font-size:16px}
+.feed{color:var(--mut);font-weight:normal;font-size:13px;margin-top:4px}
+.main{background:var(--acc);color:#111;border:0;border-radius:12px;padding:13px 22px;font-size:18px;margin-top:10px}
+.mute{position:fixed;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);background:var(--card);border:2px solid var(--line);border-radius:50%;width:42px;height:42px;font-size:18px}
+.shake{animation:sk .3s}@keyframes sk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.center{text-align:center}.huge{font-size:60px}
+</style></head><body><button class="mute" id="mu">🔊</button><div class="app" id="app"></div>
+<script>
+// TEACHERS: edit questions in Z. Choice: ["sentence with ___","correct|wrong|wrong"] (correct is ALWAYS first, game shuffles).
+// Build: ["=","sentence"]  Sort: ["~","word",0 or 1]  Picture: ["^","Tap the FASTEST!","🚀 rocket|🐢 turtle|🚗 car","full sentence"]
+const OLD={
+pres:{n:"Present Tenses",i:"🏃",d:"simple · continuous · don't/doesn't",q:[
+["She ___ (go) to school every day.","goes|go|gos"],["He ___ (watch) TV every night.","watches|watchs|watch"],
+["My sister ___ her homework now.","is doing|does|do"],["I ___ like carrots.","don't|doesn't|isn't"],
+["___ she play football?","Does|Do|Is"],["Look! They ___ for the bus.","are running|run|runs"],
+["Water ___ at 100 degrees.","boils|is boiling|boil"],["I ___ the answer. (know)","know|am knowing|knows"],
+["=","She studies English every day"],["=","They are watching a film now"],["=","He doesn't play football"]]},
+qty:{n:"Food & Quantity",i:"🍎",d:"there is/are · some/any · much/many · a few/a little",q:[
+["~","apples",0],["~","beef",1],["~","pasta",1],["~","tomatoes",0],["~","cheese",1],
+["There ___ a melon on the table.","is|are"],["There ___ some tomatoes in the fridge.","are|is"],
+["There isn't ___ cheese.","any|some|a"],["Is there ___ beef?","any|some|many"],
+["How ___ rice is there?","much|many|few"],["How ___ onions have we got?","many|much|little"],
+["There are ___ bananas! Wow!","a lot of|a little|much"],["We've got ___ butter. Not much.","a little|a few|many"],
+["There are ___ onions. Just three.","a few|a little|much"],["I'd ___ some milk, please.","like|likes|liking"]]},
+comp:{n:"Compare Battle",i:"⚖️",d:"comparatives · superlatives",q:[
+["^","Tap the FASTEST!","🚀 rocket|🐢 turtle|🚗 car","The rocket is the fastest."],
+["^","Tap the SMALLEST!","🐜 ant|🐘 elephant|🐕 dog","The ant is the smallest."],
+["^","Tap the one HEAVIER than a cat!","🐘 elephant|🪶 feather","An elephant is heavier than a cat."],
+["^","Tap the MOST DANGEROUS!","🦈 shark|🐰 rabbit|🦆 duck","The shark is the most dangerous."],
+["Today is ___ than yesterday. (warm)","warmer|more warm|warmest"],
+["This sofa is ___ than that chair. (comfortable)","more comfortable|comfortabler|most comfortable"],
+["Who is the most intelligent girl ___ the school?","in|of|at"],["My bike is ___ than yours. (good)","better|gooder|best"],
+["It's the ___ day of the year! (sunny)","sunniest|sunnyest|most sunny"],["This is the ___ mountain in the world. (high)","highest|higher|most high"],
+["A big house is ___ than a small house.","bigger|biger|more big"]]},
+mod:{n:"Rules & Advice",i:"📜",d:"have to · should · would like",q:[
+["We ___ do P.E. at school.","have to|has to|are to"],["He ___ arrive at 9 o'clock.","has to|have to|must to"],
+["You can go home. You ___ stay until 4.15.","don't have to|have to|shouldn't"],["___ she have to help?","Does|Do|Is"],
+["It's stormy! You ___ go outside.","shouldn't|should|don't"],["She ___ take her exam again.","should|shoulds|should to"],
+["___ you like a sandwich?","Would|Do|Are"],["=","I have to go to school"],["=","You should drink more water"],["=","He has to wear a uniform"]]},
+prep:{n:"Prepositions",i:"📍",d:"time · place · adjective + preposition",q:[
+["I have a shower ___ breakfast.","before|during|until"],["My birthday is ___ June.","in|on|at"],
+["The party is ___ Friday.","on|in|at"],["I wake up ___ 7 a.m.","at|in|on"],["My dad works from nine ___ five.","to|until|at"],
+["I'm good ___ maths.","at|in|of"],["France is famous ___ cheese.","for|of|at"],["I'm excited ___ the party!","about|of|for"],
+["We arrive ___ London at 5.","in|at|to"],["We arrive ___ the cinema at 6.","at|in|to"],
+["The shop is ___ the bank and the school.","between|opposite|behind"]]},
+misc:{n:"Time, Often & Linking",i:"⏰",d:"clock times · frequency · and/but/or/so/because · un-",q:[
+["I ___ have breakfast. (0%)","never|always|often"],["8.15 = ___ eight","quarter past|quarter to|half past"],
+["6.30 = ___ six","half past|quarter to|ten to"],["4.45 = quarter ___ five","to|past|at"],
+["I like maths ___ I don't like history.","but|and|or"],["I always wear jeans ___ I don't like skirts.","because|but|or"],
+["Do you want juice ___ milk?","or|and|so"],["I don't like sport, ___ I never play football.","so|because|but"],
+["friendly → ___friendly","un|dis|non"],["What are you ___ on Saturday evening?","doing|do|does"],
+["=","You are always late"],["=","I never have breakfast"]]}};
+
+// ---- more questions (same formats as above) ----
+OLD.pres.q.push(["My dad ___ (fly) to Dubai every month.","flies|flys|fly"],["The baby ___ (cry) a lot at night.","cries|crys|cry"],
+["We ___ football on Saturdays.","play|plays|playing"],["She ___ eat meat. She's vegetarian.","doesn't|don't|isn't"],
+["What ___ you do every morning?","do|does|are"],["Listen! Someone ___ at the door.","is knocking|knocks|knock"],
+["I ___ my room right now.","am cleaning|clean|cleans"],["He ___ (have) a big family.","has|have|haves"],
+["The sun ___ in the east.","rises|is rising|rise"],["Are you ___ to music now?","listening|listen|listens"],
+["They ___ in the park at the moment.","aren't playing|don't play|doesn't play"],["Does your brother ___ English?","speak|speaks|speaking"],
+["=","My mother cooks dinner every evening"],["=","We are not doing homework now"],["=","Does she walk to school?"]);
+OLD.qty.q.push(["~","milk",1],["~","egg",0],["~","rice",1],["~","carrot",0],["~","juice",1],["~","sandwich",0],["~","sugar",1],["~","banana",0],
+["There ___ any eggs in the box.","aren't|isn't|is"],["How ___ sugar do you want?","much|many|few"],["How ___ students are in the room?","many|much|a little"],
+["There is ___ water in my bottle. Only a bit.","a little|a few|many"],["We have ___ apples. Let's make a pie!","a lot of|a little|much"],
+["Are there ___ mushrooms in the soup?","any|some|a"],["There ___ some bread on the table.","is|are"],["There ___ two cats in the garden.","are|is"],
+["Would you ___ some tea?","like|likes|want to"],["I'd like ___ orange juice, please.","some|any|many"]);
+OLD.comp.q.push(["^","Tap the TALLEST!","🦒 giraffe|🐕 dog|🐇 rabbit","The giraffe is the tallest."],
+["^","Tap the one COLDER than water!","🧊 ice|☀️ sun","Ice is colder than water."],["^","Tap the LONGEST!","🐍 snake|🐛 worm|🐜 ant","The snake is the longest."],
+["^","Tap the one FASTER than a car!","✈️ plane|🚲 bike","A plane is faster than a car."],["^","Tap the OLDEST!","👴 grandpa|👦 boy|👶 baby","The grandpa is the oldest."],
+["My bag is ___ than your bag. (heavy)","heavier|heavyer|more heavy"],["Maths is ___ than English for me. (difficult)","more difficult|difficulter|most difficult"],
+["She is the ___ girl in my class. (tall)","tallest|tallist|most tall"],["This is the ___ film ever! (bad)","worst|baddest|most bad"],
+["London is ___ than Oxford. (big)","bigger|more big|biggest"],["He runs ___ than me. (fast)","faster|more fast|fastest"],
+["That is the ___ book in the shop. (expensive)","most expensive|expensivest|more expensive"],["The Nile is the ___ river in Africa. (long)","longest|longer|most long"]);
+OLD.mod.q.push(["I ___ wear a helmet when I ride a bike.","have to|has to|am to"],["My brother ___ wake up early for school.","has to|have to|haves to"],
+["We ___ wear a uniform at the weekend. It's free time!","don't have to|have to|shouldn't"],["She ___ do homework on Sundays. No school!","doesn't have to|don't have to|has to"],
+["You ___ eat lots of vegetables. They're healthy.","should|shouldn't|doesn't"],["You ___ stay up late. You'll be tired.","shouldn't|should|don't"],
+["___ they have to wear shoes inside?","Do|Does|Are"],["___ we invite our cousin to the party?","Should|Do|Would"],
+["I'd ___ a cold drink, please.","like|likes|liking"],["___ you like some cake?","Would|Do|Should"],
+["=","Do we have to wear a uniform?"],["=","She shouldn't eat so much sugar"],["=","You don't have to come"]);
+OLD.prep.q.push(["I have lunch ___ midday.","at|in|on"],["We go to the beach ___ summer.","in|on|at"],["The test is ___ Monday morning.","on|in|at"],
+["I don't watch TV ___ dinner.","during|until|from"],["Wait here ___ I come back.","until|during|at"],["See you ___ the weekend!","at|in|on"],
+["I'm interested ___ space.","in|on|at"],["He's afraid ___ spiders.","of|at|for"],["She's similar ___ her mother.","to|for|of"],
+["The school is ___ the park. (across the road)","opposite|between|behind"],["The bank is ___ the cinema. (beside it)","next to|opposite|under"],
+["I arrive ___ school at 8.","at|in|to"],["We arrive ___ Paris tomorrow.","in|at|on"],["Go ___ King's Road.","along|at|in"],["I'm pleased ___ my new bike.","with|to|on"]);
+OLD.misc.q.push(["I ___ eat breakfast. (100%)","always|never|hardly ever"],["She is ___ late. (0%)","never|always|usually"],
+["10.00 = ten ___","o'clock|past|to"],["12.00 = ___","midday|midnight|quarter"],["2.55 = five ___ three","to|past|at"],["11.20 = twenty ___ eleven","past|to|at"],
+["I'm tired, ___ I'm going to bed.","so|but|or"],["I like cats ___ dogs.","and|but|so"],["He is ___ to animals. (not kind)","unkind|dikind|nokind"],
+["This homework is ___. (not necessary)","unnecessary|dinecessary|nonnecessary"],["Do you want tea ___ coffee?","or|and|because"],
+["I stay home ___ it's raining.","because|but|so"],["It's sunny, ___ it's cold.","but|so|or"],["=","He usually wears a tracksuit"],["=","Her socks are often wet"]);
+// ---- overall score + fresh questions each drop ----
+const T={xp:0,g:0,ok:0,n:0,best:null},seen={};
+function draw(m,all){const bt=m[0]==='S',pool=bt?all:Z[m].q,n=bt?12:8;let f=pool.filter(q=>!(seen[m]||[]).includes(q));
+ if(f.length<n){seen[m]=[];f=pool}const c=sh(f).slice(0,n);seen[m]=(seen[m]||[]).concat(c);return c}
+const stats=()=>T.g?`<div class="card center">🏅 Level ${Math.floor(T.xp/200)+1} · ⭐ ${T.xp} XP<div class="feed">Games ${T.g} · Accuracy ${Math.round(T.ok/(T.n||1)*100)}% · Best rank #${T.best}</div></div>`:'';
+
+// ---- UNITS (Solutions Elementary). Section 1 = units 1-5, Section 2 = units 6-9 ----
+const pk=(k,ix)=>ix.map(i=>OLD[k].q[i]),rest=(k,ex)=>OLD[k].q.filter((_,i)=>!ex.includes(i));
+const Z={
+u1:{i:"👨‍👩‍👧",n:"Unit 1 · Family & friends",d:"present simple · adjective + preposition · family words",s:1,q:[...pk('pres',[0,1,3,4,8,10,11,12,13,14,15,18,22,23,25]),...pk('prep',[5,6,7,17,18,19,25]),
+["^","Tap: your mother's mother","👵 grandmother|👩 aunt|👧 niece","Your mother's mother is your grandmother."],
+["^","Tap: your uncle's son","👦 cousin|👨 brother|👶 nephew","Your uncle's son is your cousin."],
+["^","Tap: your sister's daughter","👧 niece|👩 aunt|👵 grandmother","Your sister's daughter is your niece."]]},
+u2:{i:"🏫",n:"Unit 2 · School days",d:"have to · should · times · adverbs of frequency · prepositions of time",s:1,q:[...rest('mod',[6,18,19]),...pk('misc',[0,1,2,3,10,11,12,13,14,15,16,17,25,26]),...pk('prep',[0,1,2,3,4,11,12,13,14,15,16]),
+["^","Tap: you do this when you open your eyes in the morning","⏰ wake up|🛌 go to bed|🍽️ have dinner","You wake up in the morning."],
+["^","Tap the school subject with numbers","➗ maths|🎨 art|⚽ P.E.","Maths is the subject with numbers."],
+["^","Tap: the last thing you do at night","🛌 go to bed|🍳 have breakfast|🏫 arrive at school","You go to bed at night."]]},
+u3:{i:"👗",n:"Unit 3 · Style",d:"present continuous · simple vs continuous · linking words · un-",s:1,q:[...pk('pres',[2,5,6,7,9,16,17,19,20,21,24]),...pk('misc',[4,5,6,7,8,9,18,19,20,21,22,23,24]),
+["^","Tap: you wear them on your feet","👟 trainers|🧢 cap|🧥 jacket","You wear trainers on your feet."],
+["^","Tap: you wear it on your head","🧢 cap|🧦 socks|👖 jeans","You wear a cap on your head."],
+["^","Tap: you wear it when it rains","☔ raincoat|🩳 shorts|🧣 scarf","You wear a raincoat when it rains."]]},
+u4:{i:"🍽️",n:"Unit 4 · Food",d:"countable/uncountable · some/any · there is/are · much/many · a few/a little · would like",s:1,q:[...OLD.qty.q,...pk('mod',[6,18,19]),
+["^","Tap: a yellow fruit","🍌 banana|🍅 tomato|🥦 broccoli","A banana is a yellow fruit."],
+["^","Tap: it is made from milk","🧀 cheese|🍞 bread|🥩 beef","Cheese is made from milk."],
+["^","Tap: a drink","🥛 milk|🍞 bread|🍗 chicken","Milk is a drink."]]},
+u5:{i:"🏙️",n:"Unit 5 · In the city",d:"comparatives · superlatives · prepositions of place · directions",s:1,q:[...OLD.comp.q,...pk('prep',[8,9,10,20,21,22,23,24]),
+["^","Tap: you borrow books here","📚 library|🏥 hospital|🏦 bank","You borrow books in a library."],
+["^","Tap: you keep money here","🏦 bank|🏪 shop|🏫 school","You keep money in a bank."],
+["^","Tap: you catch a train here","🚉 station|🏨 hotel|🏟️ stadium","You catch a train at the station."]]},
+u6:{i:"🦁",n:"Unit 6 · Going wild",d:"past simple: was/were, could, regular verbs · prepositions of movement",s:2,q:[
+["We ___ at the zoo last Sunday.","were|was|are"],["I ___ very happy yesterday.","was|were|am"],["___ you at home last night?","Were|Was|Are"],
+["My grandfather ___ swim when he was five.","could|can|cans"],["She ___ the bus to school yesterday. (miss)","missed|miss|missing"],
+["They ___ tennis last weekend. (play)","played|plays|plaied"],["He ___ his room an hour ago. (tidy)","tidied|tidyed|tidys"],
+["The bus ___ at the zoo gate. (stop)","stopped|stoped|stopt"],["We ___ the lions at the zoo. (watch)","watched|watching|watchd"],
+["The frog jumped ___ the pond. Now it is in the water.","into|over|past"],["The bird flew ___ the mountain to the other side.","over|into|along"],
+["We walked ___ the tunnel and came out the other side.","through|across|round"],["The tiger ran ___ the cage. Now it is free!","out of|into|up"],
+["They walked ___ the river to the bridge.","along|over|into"],["I ___ at school yesterday. I was ill.","wasn't|weren't|didn't"],
+["Last year she ___ swim. Now she can!","couldn't|can't|wasn't"],["Two days ___, I saw a whale.","ago|before|last"],
+["=","We were at the zoo yesterday"],["=","The bear couldn't swim"],["=","She watched a film last night"],
+["^","Tap: the biggest animal on land","🐘 elephant|🦒 giraffe|🐒 monkey","The elephant is the biggest animal on land."],
+["^","Tap: it lives in water","🐬 dolphin|🦁 lion|🦅 eagle","A dolphin lives in water."],
+["^","Tap: an insect that makes honey","🐝 bee|🦋 butterfly|🕷️ spider","A bee makes honey."],
+["^","Tap: a bird that flies high","🦅 eagle|🐸 frog|🐍 snake","An eagle is a bird that flies high."]]},
+u7:{i:"💻",n:"Unit 7 · Digital world",d:"irregular past verbs · past simple negative and questions · computing words",s:2,q:[
+["I ___ a new phone last week. (buy)","bought|buyed|buy"],["She ___ me an email yesterday. (send)","sent|sended|send"],
+["We ___ a great film last night. (see)","saw|seen|seed"],["He ___ his laptop home. (take)","took|taked|taken"],
+["They ___ to school by bus. (go)","went|goed|gone"],["I ___ the answer on the internet. (find)","found|finded|find"],
+["I ___ my homework. (not do)","didn't do|didn't did|don't did"],["___ you play games yesterday?","Did|Do|Were"],
+["What ___ you do after school?","did|do|were"],["Did he log in? Yes, he ___.","did|was|does"],
+["First, turn on the computer. ___, open the program.","Then|Because|Although"],["Click ___ the icon to open the program.","on|at|to"],
+["Please ___ the lights when you leave.","turn off|turn on|turn up"],["She ___ the file before she closed it. (save)","saved|save|saveed"],
+["He didn't ___ the message. (read)","read|reads|readed"],
+["=","I didn't go online yesterday"],["=","Did you send the email?"],["=","She bought a new laptop"],
+["^","Tap: you type on it","⌨️ keyboard|🖱️ mouse|🖥️ screen","You type on a keyboard."],
+["^","Tap: you click with it","🖱️ mouse|⌨️ keyboard|🎧 headphones","You click with a mouse."],
+["^","Tap: you listen to music with them","🎧 headphones|🔋 battery|📷 camera","You listen to music with headphones."],
+["^","Tap: you take photos with it","📷 camera|💾 file|🔌 charger","You take photos with a camera."]]},
+u8:{i:"🏅",n:"Unit 8 · Be active!",d:"going to · will · I think / I don't think + will · sports · noun suffixes",s:2,q:[
+["I ___ play tennis tomorrow. It's my plan.","am going to|going to|am go to"],["Look at those clouds! It ___ rain.","is going to|will|was"],
+["We ___ visit our grandma next weekend.","are going to|is going to|goes to"],["___ you going to join the football team?","Are|Do|Will"],
+["She ___ going to swim today. She's ill.","isn't|doesn't|won't"],["I think it ___ be sunny tomorrow.","will|is going|does"],
+["I don't think he ___ win the race.","will|won't|wills"],["Don't worry. I ___ help you!","will|going to|am"],
+["I think we ___ win the match.","will|are going|did"],["She will ___ the test. She studies hard.","pass|passes|passed"],
+["He won't ___ late. He is always on time.","be|is|being"],["A person who plays tennis is a tennis ___.","player|playing|plays"],
+["I want to be a ___. I love swimming.","swimmer|swimer|swimmist"],["We are going to play next ___. (the week after this one)","week|ago|yesterday"],
+["=","I'm going to play football tomorrow"],["=","She will win the race"],["=","They aren't going to swim today"],
+["^","Tap: you hit a ball over a net with a racket","🎾 tennis|⛷️ skiing|🥋 judo","You play tennis with a racket and a ball."],
+["^","Tap: you do this on snow","⛷️ skiing|🏊 swimming|🚴 cycling","You go skiing on snow."],
+["^","Tap: you do this in a pool","🏊 swimming|🏄 surfing|⛸️ ice skating","You go swimming in a pool."]]},
+u9:{i:"🏠",n:"Unit 9 · Home sweet home!",d:"present perfect · already / yet / just · furniture · do, make, take",s:2,q:[
+["I ___ just tidied my room.","have|am|did"],["She ___ just left the house.","has|have|is"],["We have ___ a new sofa. (buy)","bought|buy|buyed"],
+["He has ___ his keys. He can't get in. (lose)","lost|lose|losted"],["They haven't ___ their dinner yet. (eat)","eaten|ate|eat"],
+["___ you ever been to London?","Have|Did|Are"],["I've ___ done my homework.","already|yet|ago"],
+["Have you finished your homework ___?","yet|ago|ever"],["She hasn't called me ___.","yet|already|ever"],
+["We ___ the washing-up after dinner.","do|make|take"],["Can you ___ a cup of tea, please?","make|do|take"],
+["She has ___ a shower. (take)","taken|done|made"],["My brother ___ not finished his project yet.","has|have|is"],
+["=","I have already tidied my room"],["=","She hasn't finished yet"],["=","Have you cleaned the kitchen?"],
+["^","Tap: you wash your hands in it","🚰 sink|🛏️ bed|🛋️ sofa","You wash your hands in the sink."],
+["^","Tap: you cook food on it","🍳 cooker|🪞 mirror|📺 TV","You cook food on a cooker."],
+["^","Tap: you look at yourself in it","🪞 mirror|🪑 chair|🛏️ bed","You look at yourself in a mirror."],
+["^","Tap: you hang your clothes in it","👗 wardrobe|🚰 sink|🍳 cooker","You hang your clothes in a wardrobe."]]}};
+
+// ---- extra practice: present simple/continuous, frequency, quantifiers, comparatives ----
+Z.u1.q.push(["My uncle ___ in a bank. (work)","works|work|working"],["Tom and Ben ___ the bus to school.","take|takes|taking"],
+["Our cat ___ milk every morning. (drink)","drinks|drink|drinking"],["My cousins ___ in Spain.","live|lives|living"],
+["She ___ maths on Mondays. (study)","studies|studys|study"],["It ___ a lot in winter here. (rain)","rains|rain|raining"],
+["I ___ not have a brother.","do|does|am"],["My grandma ___ not like loud music.","does|do|is"],["Where ___ your parents work?","do|does|are"],
+["___ your sister like pizza?","Does|Do|Is"],["What time ___ the film start?","does|do|is"],["How often ___ you visit your aunt?","do|does|are"],
+["Our teacher ___ us English. (teach)","teaches|teachs|teach"],["My dad ___ cars at the garage. (fix)","fixes|fixs|fix"],
+["Birds ___ south in winter. (fly)","fly|flies|flying"],["Mia ___ her little brother to bed every night. (carry)","carries|carrys|carry"],
+["We ___ get up early on Sundays.","don't|doesn't|aren't"],["He ___ speak French. He speaks Italian.","doesn't|don't|isn't"],
+["Does Anna play the piano? Yes, she ___.","does|do|is"],["Do your friends live near you? No, they ___.","don't|doesn't|aren't"],
+["=","My brother never eats breakfast"],["=","Where does your cousin live?"],["=","My parents don't work on Sundays"],
+["=","Does your sister play tennis?"],["=","The shop opens at nine"],["=","Anna and I share a room"]);
+Z.u3.q.push(["Shh! The baby ___.","is sleeping|sleeps|sleep"],["Mum ___ dinner in the kitchen now.","is cooking|cooks|cook"],
+["The children ___ in the garden at the moment.","are playing|plays|play"],["I ___ to my friend on the phone right now.","am talking|talk|talks"],
+["Why ___ you laughing?","are|do|is"],["What ___ he doing?","is|does|are"],["It ___ raining. We don't need an umbrella.","isn't|doesn't|don't"],
+["We ___ for the bus. It's late.","are waiting|waits|wait"],["Look! The dog ___ the ball.","is chasing|chases|chase"],
+["He usually walks, but today he ___ the bus.","is taking|takes|take"],["I always drink tea, but now I ___ coffee.","am drinking|drink|drinks"],
+["I ___ this song. It's great! (love)","love|am loving|loves"],["She ___ a new phone. She wants one. (not have)","doesn't have|isn't having|don't have"],
+["We ___ the answer! (know)","know|are knowing|knows"],["He ___ to the cinema tonight with his friends.","is going|goes|go"],
+["Are they ___ football now?","playing|play|plays"],["They ___ swimming at the moment. They're at home.","aren't|don't|doesn't"],
+["The sun isn't ___ today. It's cloudy.","shining|shines|shine"],["She is ___ a letter. (write)","writing|writeing|writting"],
+["The cat is ___ on the sofa. (sit)","sitting|siting|sitings"],["We are ___ in the sea. (swim)","swimming|swiming|swimeing"],
+["He is ___ his bike. (ride)","riding|rideing|ridding"],
+["=","The children are playing outside"],["=","What is she wearing today?"],["=","I am not watching TV now"],
+["=","Are you listening to me?"],["=","He is wearing a blue jacket"]);
+Z.u2.q.push(["I ___ walk to school. (0%)","never|always|often"],["She ___ forgets her keys. (almost 0%)","hardly ever|always|usually"],
+["We ___ go to the cinema. (about 50%)","sometimes|never|always"],["He ___ plays football after school. (about 70%)","often|never|hardly ever"],
+["They ___ have pizza on Fridays. (about 90%)","usually|never|hardly ever"],["I ___ brush my teeth before bed. (100%)","always|never|hardly ever"],
+["My dad is ___ late for work. (0%)","never|always|usually"],["It is ___ cold in July here. (almost never)","hardly ever|always|usually"],
+["Ana ___ helps at home. (about 50%)","sometimes|always|never"],["We ___ eat out. We love restaurants! (about 70%)","often|hardly ever|never"],
+["=","I hardly ever watch TV"],["=","She is sometimes late for class"],["=","We usually have lunch at one"],
+["=","They always do their homework"],["=","My brother is often hungry"],["=","He never plays chess"]);
+Z.u5.q.push(["This box is ___ than that one. (light)","lighter|more light|lightest"],["Ali is ___ than his brother. (young)","younger|more young|youngest"],
+["The red car is ___ than the blue car. (cheap)","cheaper|more cheap|cheapest"],["The film was ___ than the book. (boring)","more boring|boringer|most boring"],
+["Winter is ___ than autumn. (cold)","colder|more cold|coldest"],["The test was ___ than I expected. (easy)","easier|more easy|easyer"],
+["London is ___ than Paris. (crowded)","more crowded|crowdeder|most crowded"],["Peter is ___ than me. (fit)","fitter|fiter|more fit"],
+["Cats are ___ than elephants. (small)","smaller|more small|smallest"],["This river is ___ than that one. (deep)","deeper|more deep|deepest"],
+["Gold is ___ than silver. (expensive)","more expensive|expensiver|most expensive"],["The new phone is ___ than my old one. (modern)","more modern|moderner|most modern"],
+["Her room is ___ than mine. (tidy)","tidier|more tidy|tidyer"],["Today's weather is ___ than yesterday's. (bad)","worse|badder|more bad"],
+["The bus is ___ than the train. (slow)","slower|more slow|slowest"],["A lion is ___ than a rabbit. (dangerous)","more dangerous|dangerouser|most dangerous"],
+["Mount Everest is ___ than Mont Blanc. (high)","higher|more high|highest"],["This exercise is ___ than the last one. (difficult)","more difficult|difficulter|most difficult"],
+["Sam is ___ than Leo. (funny)","funnier|funnyer|funniest"],
+["She is the ___ girl in the class. (clever)","cleverest|cleverer|more clever"],["That was the ___ day of my life! (happy)","happiest|most happy|happier"],
+["This is the ___ restaurant in town. (cheap)","cheapest|most cheap|cheaper"],["Who is the ___ person in your family? (old)","oldest|older|most old"],
+["Russia is the ___ country in the world. (large)","largest|larger|most large"],["That was the ___ film I've ever seen. (boring)","most boring|boringest|more boring"],
+["Which is the ___ animal on Earth? (fast)","fastest|faster|most fast"],["He is the ___ player in the team. (good)","best|goodest|most good"],
+["It was the ___ weather this year. (bad)","worst|baddest|most bad"],["Where is the ___ beach? (near)","nearest|nearer|most near"],
+["She has the ___ bag in the shop. (expensive)","most expensive|expensivest|more expensive"],["The Pacific is the ___ ocean. (deep)","deepest|deeper|most deep"],
+["What is the ___ day of the year? (short)","shortest|shorter|most short"],["This is the ___ sofa in the shop. (comfortable)","most comfortable|comfortablest|more comfortable"],
+["Today is the ___ day of the week for me. (busy)","busiest|most busy|busier"],
+["^","Tap the HOTTEST!","☀️ sun|🧊 ice cube|❄️ snow","The sun is the hottest."],["^","Tap the one HEAVIER than a book!","🪨 rock|🍃 leaf","A rock is heavier than a book."],
+["^","Tap the one LOUDER than a mouse!","🦁 lion|🐟 fish","A lion is louder than a mouse."],["^","Tap the SWEETEST!","🍭 lollipop|🍋 lemon|🥒 cucumber","A lollipop is the sweetest."],
+["^","Tap the DEEPEST!","🌊 ocean|🏊 pool|🛁 bath","The ocean is the deepest."],["^","Tap the one MORE EXPENSIVE than a bike!","🚗 car|🍬 candy","A car is more expensive than a bike."],
+["^","Tap the BRIGHTEST!","☀️ sun|🕯️ candle|💡 small lamp","The sun is the brightest."],
+["=","My bag is heavier than yours"],["=","This is the best day ever"],["=","She is the tallest girl in the class"],
+["=","A car is more expensive than a bike"],["=","Which is the biggest city in the country?"]);
+Z.u4.q.push(["We need ___ eggs for the cake.","some|any|much"],["There aren't ___ apples left.","any|some|a"],["Is there ___ milk in the fridge?","any|some|a few"],
+["I'd like ___ water, please.","some|any|many"],["Would you like ___ cake?","some|any|many"],["There's ___ juice in my glass. Just a drop!","a little|a few|many"],
+["We have ___ chairs, so some people must stand.","a few|a little|much"],["There isn't ___ sugar in my tea.","much|many|a few"],
+["There aren't ___ people at the party.","many|much|a little"],["She eats ___ vegetables. They're her favourite food!","a lot of|a little|any"],
+["He has ___ friends. He's very popular!","a lot of|a little|any"],["I don't have ___ time today. I'm busy.","much|many|a few"],
+["Can I have ___ rice, please? Just a little.","some|many|a few"],["There are ___ clouds in the sky. It's almost sunny.","a few|a little|much"],
+["I have ___ money in my pocket. Let's buy one sweet.","a little|a few|many"],["How ___ eggs do we need?","many|much|some"],
+["How ___ time do we have?","much|many|few"],["How ___ people are in the queue?","many|much|a little"],
+["There is ___ traffic today. The roads are empty.","not much|not many|a few"],["There ___ many shops in my village.","aren't|isn't|don't"],
+["Are there ___ tomatoes in the salad?","any|some|a little"],["We have ___ homework tonight. It's a lot!","a lot of|a few|a little"],
+["I only have ___ pencils. I need more.","a few|a little|much"],["There are ___ cars in the street. It's very busy!","a lot of|a little|any"],
+["~","orange",0],["~","water",1],["~","chair",0],["~","money",1],["~","homework",1],["~","pencil",0],["~","traffic",1],["~","sock",0],
+["~","music",1],["~","soup",1],["~","coin",0],["~","flour",1],["~","lemon",0],
+["=","There aren't any eggs in the fridge"],["=","We have a lot of homework today"],["=","How many apples are there?"],
+["=","I only have a little money"],["=","Is there any milk left?"],["=","She has a few friends in Spain"]);
+
+// ---- extra practice for units 6-9 ----
+Z.u6.q.push(["Yesterday ___ a sunny day.","was|were|is"],["My parents ___ at work last night.","were|was|are"],["___ the film good last night?","Was|Were|Is"],
+["There ___ two lions at the zoo.","were|was|are"],["He ___ at the party. He was ill.","wasn't|weren't|isn't"],["___ they happy with the result?","Were|Was|Did"],
+["Was the tea hot? Yes, it ___.","was|were|did"],["Could you swim when you were six? No, I ___.","couldn't|can't|wasn't"],
+["___ your sister read when she was four?","Could|Can|Did"],
+["We ___ the answer from the board. (copy)","copied|copyed|copys"],["She ___ her teeth before bed. (brush)","brushed|brushd|brushing"],
+["They ___ for the bus for an hour. (wait)","waited|waitted|waits"],["He ___ a good plan for the trip. (plan)","planned|planed|plans"],
+["I ___ to open the window, but it was stuck. (try)","tried|tryed|trys"],["Last summer we ___ in a small village. (stay)","stayed|stayd|stay"],
+["The children ___ in the park all afternoon. (play)","played|plays|playd"],["He ___ at the funny picture. (laugh)","laughed|laughted|laughing"],
+["We ___ to the radio in the car. (listen)","listened|listen|listening"],
+["The car drove ___ the bridge to the other side of the river.","across|into|under"],["The mouse ran ___ the hole in the wall. Now it is inside.","into|out of|past"],
+["The train went ___ a long tunnel.","through|across|along"],["He walked ___ the shop without going in.","past|into|through"],
+["We climbed ___ the hill to the top.","up|down|out of"],["Birds flew ___ our heads.","over|into|along"],
+["We went to the beach ___ summer.","last|ago|yesterday"],["They moved here three years ___.","ago|last|before"],["She was born ___ 2014.","in|on|at"],
+["=","Was your brother at school yesterday?"],["=","We watched the lions for an hour"],["=","She couldn't swim last year"],
+["=","The monkeys jumped into the tree"],["=","They walked along the river"],
+["^","Tap: the animal with a very long neck","🦒 giraffe|🐘 elephant|🦓 zebra","A giraffe has a very long neck."],
+["^","Tap: it has black and white stripes","🦓 zebra|🐅 tiger|🐻 bear","A zebra has black and white stripes."],
+["^","Tap: it hops and carries a baby in a pocket","🦘 kangaroo|🐒 monkey|🐺 wolf","A kangaroo hops and carries a baby in a pocket."],
+["^","Tap: it has eight legs","🕷️ spider|🐜 ant|🦋 butterfly","A spider has eight legs."],
+["^","Tap: a reptile","🐊 crocodile|🐬 dolphin|🦅 eagle","A crocodile is a reptile."],
+["^","Tap: it can fly and is a mammal","🦇 bat|🦅 eagle|🐝 bee","A bat is a flying mammal."]);
+Z.u7.q.push(["I ___ my keys on the table. (leave)","left|leaved|leave"],["She ___ her phone in the park. (lose)","lost|losed|lose"],
+["We ___ lunch at a café. (have)","had|haved|has"],["He ___ me a funny message. (write)","wrote|writed|written"],["They ___ a big cake for the party. (make)","made|maked|make"],
+["The bird ___ away. (fly)","flew|flied|flown"],["I ___ a strange noise last night. (hear)","heard|heared|hear"],["She ___ the answer to everyone. (tell)","told|telled|tell"],
+["My friend ___ me a book for my birthday. (give)","gave|gived|given"],["We ___ pizza for dinner. (eat)","ate|eated|eaten"],
+["She ___ her laptop yesterday. (not use)","didn't use|didn't used|don't use"],["We ___ the film. We were late. (not see)","didn't see|didn't saw|not saw"],
+["___ he buy a new phone?","Did|Does|Was"],["Did they go online? No, they ___.","didn't|don't|weren't"],["Where ___ you find that photo?","did|do|were"],
+["When ___ she send the email?","did|does|was"],
+["Don't forget to ___ the computer when you finish.","switch off|switch on|switch up"],["Can you ___ the volume? It's too loud.","turn down|turn up|turn on"],
+["First, plug ___ the charger.","in|on|out"],["Please look ___ the word in the dictionary.","up|in|on"],["Please shut ___ the computer. (turn it off)","down|up|in"],
+["Please log ___ when you finish. (stop using your account)","off|up|down"],
+["First, open the file. Then, edit it. ___, print it.","Finally|First|Because"],["I made a cake. First I mixed the eggs. ___ I added flour.","Then|Because|But"],
+["=","I didn't see the message yesterday"],["=","Where did you buy your laptop?"],["=","She left her phone at school"],["=","First, turn on the computer"],["=","We found the answer online"],
+["^","Tap: you look at it to see the picture","🖥️ screen|⌨️ keyboard|🖱️ mouse","You look at the screen to see the picture."],
+["^","Tap: you connect to it to go online","🌐 internet|🔋 battery|💾 file","You connect to the internet to go online."],
+["^","Tap: it stores power for your phone","🔋 battery|📷 camera|🎧 headphones","A battery stores power."],
+["^","Tap: you use it to charge a phone","🔌 charger|🖱️ mouse|⌨️ keyboard","You use a charger to charge a phone."],
+["^","Tap: it prints paper","🖨️ printer|🖱️ mouse|💻 laptop","A printer prints paper."],
+["^","Tap: a small computer you can carry","💻 laptop|🖥️ desktop computer|🖨️ printer","A laptop is a small computer you can carry."]);
+Z.u8.q.push(["My sister ___ be a doctor. It's her dream.","is going to|going to|is go to"],["They ___ build a new school here.","are going to|is going to|goes to"],
+["What ___ you going to do tonight?","are|do|will"],["I'm not ___ to play today. I'm tired.","going|go|will"],["He ___ going to cook dinner for us.","is|are|does"],
+["___ she going to buy that dress?","Is|Does|Will"],["Are you going to play? Yes, I ___.","am|do|will"],["It's 8.30 and we're late. We ___ miss the bus!","are going to|will going|go to"],
+["I think our team ___ win.","will|will to|wills"],["I'm sure you ___ love this book!","will|are|do"],["Perhaps she ___ call me later.","will|is|does"],
+["I'm cold. I ___ close the window.","will|going|did"],["I think it ___ snow next week.","will|going|does"],["In 2050, cars ___ fly.","will|are|do"],
+["She won't ___ the test. She didn't study.","pass|passes|passed"],
+["A person who runs is a ___.","runner|runing|runist"],["A person who plays the piano is a ___.","pianist|pianoer|pianoist"],
+["A person from Italy is ___.","Italian|Italish|Italer"],["A person from Germany is ___.","German|Germanian|Germaner"],["A person from Poland is ___.","Polish|Polander|Polandish"],
+["A person who acts in films is an ___.","actor|actist|acter"],
+["We are going to travel next ___. (the summer after this one)","summer|ago|yesterday"],["Let's meet ___. (the day after today)","tomorrow|yesterday|last week"],
+["=","I'm going to play basketball on Saturday"],["=","Are you going to swim tomorrow?"],["=","I think it will rain tonight"],["=","They won't win the match"],["=","What are you going to do?"],
+["^","Tap: you do this in the sea with a board and waves","🏄 surfing|🏊 swimming|🚣 rowing","You go surfing in the sea."],
+["^","Tap: you wear gloves and hit","🥊 boxing|⚽ football|🏀 basketball","Boxers wear gloves."],
+["^","Tap: you do this on ice","⛸️ ice skating|🏄 surfing|🚴 cycling","You go ice skating on ice."],
+["^","Tap: you ride a bike","🚴 cycling|🏃 running|🧘 yoga","You go cycling on a bike."],
+["^","Tap: you hit a small ball into a hole with a club","⛳ golf|🏀 basketball|🥋 karate","You play golf with a club and a small ball."],
+["^","Tap: you move slowly and stretch your body","🧘 yoga|⚽ football|🏊 swimming","You do yoga to stretch your body."]);
+Z.u9.q.push(["I ___ finished my homework. Now I can play.","have|has|am"],["She ___ lost her bag.","has|have|is"],["We ___ seen that film three times.","have|has|are"],
+["He ___ never eaten sushi.","has|have|is"],["My dad has ___ the car. It's clean now. (wash)","washed|wash|washing"],["She has ___ her room. It's tidy now. (clean)","cleaned|clean|cleaning"],
+["Have you ___ the window? It's cold. (open)","opened|open|opening"],["I've ___ been to Paris. (0 times)","never|ever|yet"],["Have you ___ played golf?","ever|yet|ago"],
+["The train hasn't arrived ___.","yet|already|ever"],["I've ___ read that book. Don't tell me the end!","already|yet|ever"],["They have ___ got home. They arrived a minute ago.","just|yet|ever"],
+["___ she finished? Yes, she has.","Has|Have|Does"],["Has he called? No, he ___.","hasn't|haven't|doesn't"],["Have they arrived? Yes, they ___.","have|has|did"],
+["I ___ my bed every morning.","make|do|take"],["I need to ___ my homework.","do|make|bring"],["Can you ___ me a glass of water?","bring|take|do"],
+["Let's ___ a photo of the room.","take|do|bring"],["We ___ a lot of noise last night.","made|did|took"],["She is ___ a shower.","having|making|doing"],
+["He didn't ___ any mistakes in the test.","make|do|take"],["They ___ the cleaning on Saturdays.","do|make|bring"],
+["=","I have just finished my homework"],["=","She has never been to London"],["=","Have you ever eaten sushi?"],["=","They haven't arrived yet"],["=","He has already cleaned the kitchen"],
+["^","Tap: it shows the time","🕒 clock|🪞 mirror|💡 lamp","A clock shows the time."],["^","Tap: it gives you light on your desk","💡 lamp|🪞 mirror|🛁 bath","A lamp gives you light."],
+["^","Tap: you park the car here","🚗 garage|🛏️ bedroom|🍳 kitchen","You park the car in the garage."],["^","Tap: you sleep in this room","🛏️ bedroom|🚿 bathroom|🍳 kitchen","You sleep in the bedroom."],
+["^","Tap: you wash clothes in it","🧺 washing machine|🍳 cooker|📺 TV","You wash clothes in a washing machine."],["^","Tap: it keeps food cold","🧊 fridge|🍳 cooker|🪑 chair","A fridge keeps food cold."],
+["^","Tap: you study or work at it","🖥️ desk|🛁 bath|🪞 mirror","You work at a desk."]);
+
+// ---- themed questions: cars, football, space, games, books ----
+Z.u1.q.push(["My dad ___ a red sports car. (drive)","drives|drive|driving"],["The striker ___ the ball very hard. (kick)","kicks|kick|kicking"],
+["The goalkeeper ___ the ball every time. (catch)","catches|catchs|catch"],["Astronauts ___ in space for months. (live)","live|lives|living"],
+["She ___ a new book every week. (read)","reads|read|reading"],["My brother ___ video games after school.","plays|play|playing"],
+["The rocket ___ at ten o'clock. (leave)","leaves|leave|leaving"],["___ your uncle fix cars?","Does|Do|Is"],
+["Our team ___ lose many matches.","doesn't|don't|isn't"],["What ___ astronauts eat in space?","do|does|are"],
+["=","The striker scores a goal every week"],["=","My sister reads a book every night"]);
+Z.u2.q.push(["He ___ plays video games on school nights. (0%)","never|always|often"],["I ___ read before bed. (100%)","always|never|hardly ever"],
+["Our team ___ wins at home. (about 90%)","usually|never|hardly ever"],["Astronauts ___ exercise in space. (100%)","always|never|hardly ever"],
+["My dad ___ washes his car. (about 50%)","sometimes|always|never"],["Dad ___ drives fast. He is very careful. (almost 0%)","hardly ever|always|often"],
+["Players ___ train hard every day.","have to|has to|are to"],["A driver ___ wear a seat belt.","has to|have to|haves to"],
+["You ___ shout at the referee. It's rude.","shouldn't|should|have"],["You ___ read the instructions before you play the game.","should|shouldn't|doesn't"],
+["=","I sometimes read comics at lunch"],["=","He is always late for football practice"]);
+Z.u3.q.push(["Look! The rocket ___ into space.","is flying|flies|fly"],["The striker ___ towards the goal right now.","is running|runs|run"],
+["She ___ a thrilling book at the moment.","is reading|reads|read"],["We ___ a racing game now.","are playing|plays|play"],
+["My dad ___ the car in the garage.","is fixing|fixes|fix"],["Astronauts ___ in space. They're floating!","aren't walking|don't walk|doesn't walk"],
+["Is the team ___ well today?","playing|plays|play"],["The fans ___ loudly because their team scored.","are shouting|shouts|shout"],
+["I ___ this book. It's brilliant! (love)","love|am loving|loves"],
+["=","The astronauts are floating in space"],["=","They are playing a new game"]);
+Z.u4.q.push(["There are ___ stars in the sky tonight!","a lot of|a little|much"],["There aren't ___ spaceships in my town.","any|some|a"],
+["I have ___ comics, but I love them. (just three)","a few|a little|much"],["How ___ goals did your team score?","many|much|few"],
+["How ___ petrol is there in the car?","much|many|few"],["There isn't ___ time left in the match.","much|many|a few"],
+["We have ___ new games. Come and see!","some|any|much"],["There's ___ fuel left in the rocket. It's almost empty.","a little|a few|many"],
+["Are there ___ books about space in the library?","any|some|a little"],["She has ___ video games. She plays all day!","a lot of|a little|any"],
+["~","goal",0],["~","petrol",1],["~","planet",0],["~","fuel",1],["~","book",0],["~","information",1],
+["=","There are a lot of stars tonight"],["=","How many goals did he score?"]);
+Z.u5.q.push(["A rocket is ___ than a car. (fast)","faster|more fast|fastest"],["This sports car is ___ than my dad's car. (expensive)","more expensive|expensiver|most expensive"],
+["The Moon is ___ than the Sun. (small)","smaller|more small|smallest"],["Jupiter is the ___ planet in our solar system. (big)","biggest|most big|bigger"],
+["The ___ player in the team scored three goals. (good)","best|goodest|most good"],["This book is ___ than the film. (interesting)","more interesting|interestinger|most interesting"],
+["Which is the ___ car in the world? (fast)","fastest|most fast|faster"],["The stadium is ___ than our school. (big)","bigger|more big|biggest"],
+["This is the ___ game I have ever played! (exciting)","most exciting|excitingest|more exciting"],["Mars is ___ from the Sun than Earth. (far)","further|more far|furthest"],
+["The ___ book on the shelf is my favourite. (thick)","thickest|most thick|thicker"],["Racing cars are ___ than buses. (noisy)","noisier|noisyer|noisiest"],
+["^","Tap the FASTEST!","🏎️ racing car|🚲 bike|🛴 scooter","The racing car is the fastest."],["^","Tap the BIGGEST!","☀️ Sun|🌍 Earth|🌙 Moon","The Sun is the biggest."],
+["^","Tap the one FASTER than a bike!","🏎️ racing car|🐢 turtle","A racing car is faster than a bike."],
+["=","A rocket is faster than a car"],["=","This is the most exciting game ever"]);
+Z.u6.q.push(["The astronauts ___ on the Moon in 1969. (land)","landed|landd|landing"],["He ___ the car in the garage. (park)","parked|parkd|parks"],
+["The striker ___ the ball into the net. (kick)","kicked|kickd|kick"],["We ___ a new game last night. (download)","downloaded|downloadd|download"],
+["She ___ the whole book in one day. (finish)","finished|finishd|finishing"],["The rocket ___ at midnight. (launch)","launched|launchd|launch"],
+["The fans ___ when the goal went in. (cheer)","cheered|cheerd|cheering"],["Was the match exciting? Yes, it ___.","was|were|did"],
+["There ___ thousands of fans at the stadium.","were|was|are"],["The car ___ drive fast. It was very old.","couldn't|can't|wasn't"],
+["The ball flew ___ the goalkeeper's head.","over|into|along"],
+["=","The astronauts landed on the Moon"],["=","The fans cheered loudly"]);
+Z.u7.q.push(["Our team ___ the match yesterday. (win)","won|winned|win"],["She ___ a fantastic book last week. (read)","read|readed|reads"],
+["We ___ a spaceship at the museum. (see)","saw|seen|seed"],["Dad ___ a new car last month. (buy)","bought|buyed|buy"],
+["The players ___ very hard in training. (run)","ran|runned|run"],["He ___ the car too fast. (drive)","drove|drived|driven"],
+["The rocket ___ into the sky. (go)","went|goed|gone"],["They ___ the final. (not win)","didn't win|didn't won|don't win"],
+["Did the team score? No, they ___.","didn't|don't|weren't"],["What ___ you read on holiday?","did|do|were"],["How much ___ the car cost?","did|do|was"],
+["Did astronauts walk on Mars? No, they ___.","didn't|don't|weren't"],
+["=","Our team won the cup last year"],["=","Did you read the book?"],["=","He drove the car very fast"]);
+Z.u8.q.push(["I'm sure humans ___ live on Mars one day.","will|are|do"],["I think our team ___ win the final.","will|won't to|is"],
+["Look at that car! It ___ crash!","is going to|is go to|goes to"],["Tonight I ___ play my new game. I can't wait!","am going to|going to|will going"],
+["The rocket ___ launch tomorrow morning.","is going to|going to|are going to"],["I don't think robots ___ drive all cars.","will|won't|wills"],
+["In 2100, people ___ travel to space for holidays.","will|are|do"],["She ___ going to be an astronaut.","is|are|does"],
+["A person who drives a car is a ___.","driver|driveer|drivist"],["A person who plays football is a ___.","footballer|footballist|footballor"],
+["A person who writes books is a ___.","writer|writist|writeer"],
+["^","Tap: the sport with a ball and goals","⚽ football|🎾 tennis|🥋 judo","You score goals in football."],
+["^","Tap: the sport with fast cars","🏎️ motor racing|🏊 swimming|🧘 yoga","Cars go very fast in motor racing."],
+["=","I think our team will win"],["=","Tonight I'm going to play my new game"]);
+Z.u9.q.push(["The rocket ___ just landed on Mars.","has|have|is"],["He has ___ the ball into the net. (kick)","kicked|kick|kicking"],
+["I have ___ three books this month. (read)","read|readed|reads"],["We have ___ the final level of the game. (finish)","finished|finish|finishing"],
+["Have you ___ driven a fast car?","ever|yet|ago"],["The team ___ won every match this season.","has|have|is"],["The match hasn't started ___.","yet|already|ever"],
+["I've ___ played this game. It's too easy!","already|yet|ever"],["She has ___ seen a rocket launch. It was amazing!","just|yet|ago"],
+["=","The team has already won the cup"],["=","Have you ever seen a rocket?"]);
+
+// ---- new modes: ["!","sentence with one wrong word","wrong word","corrected sentence"] and ["?","odd|same|same|same","why"] ----
+Z.u1.q.push(["I have two ___. (foot)","feet|foots|feets"],["We cooked six ___ for dinner. (potato)","potatoes|potatos|potatoies"],
+["There are three ___ this weekend. (party)","parties|partys|partyes"],["Two ___ are waiting outside. (lady)","ladies|ladys|ladyes"],["Take some ___ of the trip. (photo)","photos|photoes|photoss"],
+["My brother is keen ___ chess.","on|at|of"],["Dad is angry ___ me.","with|of|for"],["I'm frightened ___ big dogs.","of|from|at"],["Max is similar ___ his dad.","to|with|of"],
+["!","My sister watchs TV every night","watchs","My sister watches TV every night."],["!","He don't like fish","don't","He doesn't like fish."],["!","Does she plays the guitar","plays","Does she play the guitar?"],
+["?","keyboard|grandmother|stepfather|uncle","A keyboard is not a family member."]);
+Z.u2.q.push(["___ is your birthday? In May.","When|Who|Why"],["___ do you go to the gym? Twice a week.","How often|How many|How much"],
+["___ does the film start? At eight o'clock.","What time|How old|Which"],["___ are you late? Because the bus was slow.","Why|Where|Who"],
+["___ is your favourite teacher? Mrs Hill.","Who|Where|When"],["___ cousins do you have? Six.","How many|How much|How often"],
+["I wake ___ at seven.","up|on|at"],["Do you ___ dressed before breakfast?","get|go|take"],["The path is too ___ for a car. It's very thin.","narrow|wet|safe"],
+["^","Tap: you learn about the past","📜 history|🔬 biology|🎨 art","In history, you learn about the past."],
+["^","Tap: you study plants and the human body","🔬 biology|➗ maths|⚽ P.E.","Biology is about plants, animals and the body."],
+["^","Tap: you learn about countries and maps","🗺️ geography|🎵 music|📜 history","Geography is about countries and maps."],
+["!","She always meets friends in the weekend","in","She always meets friends at the weekend."],["!","We have lunch in Fridays","in","We have lunch on Fridays."],
+["!","Wait before the bus comes","before","Wait until the bus comes."],["?","breakfast|maths|geography|biology","Breakfast is not a school subject."]);
+Z.u3.q.push(["The opposite of friendly is ___.","unfriendly|nonfriendly|disfriendly"],["The opposite of expensive is ___.","cheap|unexpensive|nonexpensive"],
+["The opposite of right (correct) is ___.","wrong|unright|nonright"],["It isn't safe to cycle at night in ___ clothes.","dark|bright|smart"],
+["These shoes are too ___. I need a bigger size.","tight|baggy|plain"],["A ___ dress has stripes or squares on it.","patterned|plain|casual"],
+["My teacher wears a ___ jacket and tie.","smart|casual|baggy"],["He wears a ___ T-shirt because it's hot. It has short arms.","short-sleeved|long-sleeved|tight"],
+["?","pyjamas|trainers|boots|shoes","Pyjamas are for bed. The others are shoes."],["?","T-shirt|cardigan|jacket|coat","A T-shirt is not for cold weather."],
+["?","tie|jeans|shorts|leggings","A tie is not worn on the legs."],["!","I am knowing the answer","knowing","I know the answer."],["!","She is believing your story","believing","She believes your story."]);
+Z.u4.q.push(["The ___ cooks the food in a restaurant.","chef|customer|waiter"],["The ___ brings food to your table.","waiter|chef|knife"],
+["You use a ___ to cut meat.","knife|menu|tray"],["Look at the ___ to choose your food.","menu|tray|chef"],
+["I'm responsible ___ the dishes tonight.","for|of|with"],["My sister is bad ___ cooking.","at|in|for"],["Thank you! That's kind ___ you.","of|at|for"],["This café is popular ___ students.","with|for|at"],
+["!","I would like a rice","a","I would like some rice."],["!","She eats beefs every Sunday","beefs","She eats beef every Sunday."],["!","We need more pastas","pastas","We need more pasta."],
+["!","There aren't some apples left","some","There aren't any apples left."],["?","knife|waiter|chef|customer","A knife is an object. The others are people."],
+["?","bread|carrots|potatoes|onions","Bread is not a vegetable."]);
+Z.u5.q.push(["Summer is ___ season. (dry)","the driest|the most dry|driest"],["This is ___ T-shirt I have. (plain)","the plainest|the most plain|the plainer"],
+["My mum is ___ person in the family. (sensible)","the most sensible|the sensiblest|the more sensible"],["Yesterday was ___ day of the summer. (sunny)","the sunniest|sunniest|the most sunny"],
+["October and November are ___ months. (wet)","the wettest|the wetest|the most wet"],["What time is ___ train we can catch? (early)","the earliest|the most early|earliest"],
+["^","Tap: you take flights from here","✈️ airport|🏦 bank|🏋️ gym","You take flights at an airport."],["^","Tap: you go here if you lose something","👮 police station|📚 library|🏨 hotel","You go to the police station if you lose something."],
+["^","Tap: you leave your car here","🅿️ car park|🏨 hotel|🦁 zoo","You leave your car in a car park."],["^","Tap: doctors and nurses work here","🏥 hospital|🏛️ museum|🏋️ gym","Doctors and nurses work in a hospital."],
+["The café is ___ the library, on the other side of the road.","opposite|inside|behind"],["The ball is ___ the box. It's in it.","inside|outside|behind"],
+["___ the road carefully. Look left and right.","Cross|Miss|Lose"],["!","He is the most tall boy in class","most","He is the tallest boy in class."],
+["?","zoo|north|south|west","A zoo is not a compass direction."]);
+Z.u6.q.push(["He finished the exam a few minutes ___.","ago|last|before"],["We visited Egypt ___ year.","last|ago|before"],
+["Where ___ you yesterday? At the zoo.","were|was|are"],["It ___ cold, so the animals weren't outside.","was|were|is"],["My brother ___ talk until he was four.","couldn't|can't|wasn't"],
+["The animals ran ___ the tiger, because they were scared.","away from|towards|into"],["Look! A dog is running ___ us. It wants to play.","towards|away from|past"],
+["We can't cycle ___ that field to the other side. It's private.","across|along|into"],["I dropped my phone ___ the bath.","into|past|towards"],
+["^","Tap: she writes stories for a magazine","📰 journalist|🔬 scientist|✈️ pilot","A journalist writes for a magazine."],["^","Tap: he flies planes","✈️ pilot|⚓ sailor|🪖 soldier","A pilot flies planes."],
+["^","Tap: she does experiments in a lab","🔬 scientist|📰 journalist|🎣 fisherman","A scientist does experiments."],["^","Tap: he catches fish","🎣 fisherman|🪖 soldier|✈️ pilot","A fisherman catches fish."],
+["^","Tap: a cat walks on these","🐾 paws|🦅 wings|👂 ears","A cat walks on its paws."],["^","Tap: a crocodile has many of these","🦷 teeth|🐾 paws|🦅 wings","A crocodile has many teeth."],
+["!","We was at the zoo yesterday","was","We were at the zoo yesterday."],["!","She stoped at the shop","stoped","She stopped at the shop."],["!","I saw him ago two days","ago","I saw him two days ago."]);
+Z.u7.q.push(["My grandfather ___ this house in 1990. (build)","built|builded|build"],["The film ___ at eight. (begin)","began|begun|beginned"],
+["My teacher ___ me to swim. (teach)","taught|teached|teach"],["She ___ to her friend for an hour. (speak)","spoke|speaked|spoken"],["Lara ___ off her bike yesterday. (fall)","fell|falled|fallen"],
+["Who ___ my headphones? (break)","broke|breaked|broken"],["He ___ a doctor after university. (become)","became|becomed|become"],["I ___ the wrong bus and got lost. (get)","got|getted|gets"],
+["Last night I ___ do my homework before dinner. (have to)","had to|have to|haved to"],
+["^","Tap: you use it for video calls","📷 webcam|🖨️ printer|🔌 charger","A webcam is used for video calls."],["^","Tap: you carry it to store your files","💾 memory stick|🖱️ mouse|🖥️ screen","A memory stick stores your files."],
+["^","Tap: a flat touch-screen computer","📱 tablet|🖨️ printer|🖱️ mouse","A tablet is a flat touch-screen computer."],
+["Click here to ___ the photo to your computer.","download|upload|scan"],["I will ___ my photos to the class website.","upload|download|delete"],["Always back ___ your files.","up|off|down"],
+["An internet ___ is a place for online discussions.","forum|account|campaign"],["!","Did you helped Ben","helped","Did you help Ben?"],["!","She didn't went to school","went","She didn't go to school."],
+["!","What did you thought","thought","What did you think?"],["!","Did she can swim","can","Could she swim?"]);
+Z.u8.q.push(["He ___ going to wear his trainers today. (not)","isn't|doesn't|aren't"],["We ___ going to visit the museum. It's closed.","aren't|isn't|don't"],
+["Are you coming with us this ___?","afternoon|tomorrow|next"],["We're going on holiday in a ___ days.","few|little|many"],["I'm going to the UK ___ year.","next|after|in"],
+["We ___ basketball every Saturday.","play|go|do"],["My sister ___ yoga on Mondays.","does|goes|plays"],["Do you want to ___ swimming today?","go|do|play"],
+["He ___ karate and has a green belt.","does|plays|goes"],["They ___ skateboarding yesterday.","went|did|played"],["She ___ eat much. She isn't hungry.","won't|will|isn't"],
+["We need ___ to enter. (permit)","permission|permitment|permitness"],["They had an ___ and didn't speak. (argue)","argument|arguation|arguement"],
+["The ___ of the waiter was terrible. (rude)","rudeness|rudement|rudion"],["He gave a ___ to the charity. (donate)","donation|donatement|donateness"],
+["She gave a clear ___. (explain)","explanation|explainment|explaination"],["A person from Japan is ___.","Japanese|Japanian|Japaner"],["A person from China is ___.","Chinese|Chinan|Chinish"],
+["A person from France is ___.","French|Franch|Francian"],["A person from Turkey is ___.","Turkish|Turkian|Turkey"],["A person from Hungary is ___.","Hungarian|Hungaryan|Hungarish"],
+["^","Tap: you may wear a black belt if you are very good","🥋 karate|⛳ golf|🏐 volleyball","Karate players can wear a black belt."],["^","Tap: you hit the ball with your hands over a net","🏐 volleyball|⛳ golf|🧘 yoga","Volleyball players hit the ball over a net."],
+["^","Tap: you climb high walls","🧗 climbing|⛸️ ice skating|⛳ golf","Climbers train on high walls."]);
+Z.u9.q.push(["We have ___ the washing-up for you. (do)","done|did|doed"],["She has ___ her keys again. (forget)","forgotten|forgot|forgetted"],["He has ___ me a present. (give)","given|gave|gived"],
+["They've ___ here for an hour. (be)","been|was|being"],["She hasn't ___ yet. (reply)","replied|replyed|reply"],["We haven't ___ that film. (see)","seen|saw|seed"],["It hasn't ___ today. (rain)","rained|rain|rains"],
+["Please ___ me a favour.","do|make|have"],["Let's ___ a rest.","have|do|make"],["It's easy to ___ friends online.","make|do|take"],["He always ___ his best.","does|makes|brings"],
+["Please ___ this medicine every morning.","take|bring|do"],["You should ___ an appointment with the dentist.","make|do|take"],
+["^","Tap: you put old paper in it to recycle","🗑️ bin|🪞 mirror|🛋️ sofa","Old paper goes in the recycling bin."],["^","Tap: it washes plates and cups","🍽️ dishwasher|🧺 washing machine|🛏️ bed","A dishwasher washes plates."],
+["^","Tap: you put socks and shirts in it","🗄️ chest of drawers|🚰 sink|🍳 cooker","Clothes go in a chest of drawers."],["^","Tap: you eat dinner with guests in this room","🍽️ dining room|🛏️ bedroom|🚿 bathroom","You eat in the dining room."],
+["^","Tap: you leave your coat here when you arrive","🧥 hall|🍳 kitchen|🛁 bathroom","You leave your coat in the hall."],
+["The beach is ___. It has lots of sand.","sandy|tropical|free"],["Pineapples and mangoes are ___ fruit.","tropical|basic|daily"],
+["=","Has he spoken to the teacher yet?"],["=","Have they learned the words yet?"],
+["!","She has wrote an email","wrote","She has written an email."],["!","I have saw that film","saw","I have seen that film."],["!","They has finished","has","They have finished."]);
+
+// ---- Starter unit + Spell It mode: ["_","clue with ___","answer"] (first letter is given) ----
+Z.u0={i:"👋",n:"Starter · Getting started",d:"to be · have got · a/an/some/the · this/that · countries · instruments",s:1,q:[
+["I ___ from Poland.","am|is|are"],["She ___ my best friend. We argue a lot!","isn't|aren't|am not"],["We ___ sisters. We're cousins.","aren't|isn't|am not"],
+["___ you got a laptop?","Have|Has|Are"],["___ he got short hair?","Has|Have|Is"],["You ___ got a new bike!","have|has|are"],["Has she got a phone? No, she ___.","hasn't|haven't|isn't"],
+["___ it hot in the classroom?","Is|Are|Has"],["___ they from Spain?","Are|Is|Have"],["___ she fifteen?","Is|Are|Has"],
+["I've got ___ umbrella.","an|a|some"],["There's ___ pizza in the fridge.","a|an|some"],["We've got ___ biscuits.","some|a|an"],["___ moon is bright tonight.","The|A|An"],["I have a cat. ___ cat is black.","The|An|Some"],
+["___ is my pen. It's here, next to me.","This|That|These"],["___ are my shoes. They're right here.","These|Those|This"],["Look at ___ birds over there!","those|these|this"],["___ is a nice car. It's over there!","That|This|These"],
+["I can ___ the guitar.","play|ride|speak"],["She can ___ three languages.","speak|play|ski"],["He can ___ a horse.","ride|dance|speak"],["We can ___ in the mountains in winter.","ski|speak|play"],
+["^","Tap: the country with Madrid","🇪🇸 Spain|🇧🇷 Brazil|🇯🇵 Japan","Madrid is in Spain."],["^","Tap: the country with Tokyo","🇯🇵 Japan|🇹🇷 Turkey|🇨🇳 China","Tokyo is in Japan."],
+["^","Tap: the country with Moscow","🇷🇺 Russia|🇬🇷 Greece|🇵🇱 Poland","Moscow is in Russia."],["^","Tap: the country with Warsaw","🇵🇱 Poland|🇭🇺 Hungary|🇧🇷 Brazil","Warsaw is in Poland."],
+["^","Tap: you play it with sticks","🥁 drums|🎸 guitar|🎹 piano","You play drums with sticks."],["^","Tap: it has black and white keys","🎹 piano|🎸 guitar|🎺 trumpet","A piano has black and white keys."],
+["^","Tap: you blow into it","🎺 trumpet|🎻 violin|🎸 guitar","You blow into a trumpet."],["^","Tap: it has strings and a bow","🎻 violin|🥁 drums|🎹 piano","A violin has strings and a bow."],
+["=","I am not from Cairo"],["=","Have you got a smartphone?"],["=","She has got green eyes"],["=","Is it cold today?"],["=","They aren't in my class"],
+["!","She have got a bike","have","She has got a bike."],["!","They is from France","is","They are from France."],["!","Have he got a phone","Have","Has he got a phone?"],
+["?","guitar|Spain|Brazil|Poland","A guitar is not a country."],["?","China|piano|violin|drums","China is a country. The others are instruments."],
+["_","You play the ___ with black and white keys.","piano"],["_","A ___ has strings and a bow.","violin"],["_","Madrid is the capital of ___.","spain"],["_","You hit the ___ with sticks.","drums"]]};
+Z.u1.q.push(["=","My uncle doesn't work on Sundays"],["_","Your sister's daughter is your ___.","niece"],["_","Your uncle's son is your ___.","cousin"],
+["_","Your father's father is your ___.","grandfather"],["_","Your brother's son is your ___.","nephew"],["_","Your daughter's son is your ___.","grandson"]);
+Z.u2.q.push(["=","She doesn't have to wear a uniform"],["_","Lions and monkeys live in the ___.","jungle"],["_","We can swim in the ___ in summer.","river"],
+["_","The bridge is too ___ for big lorries.","narrow"],["_","Fishermen go to sea in a small ___.","boat"],["_","We go to the ___ to ski.","mountains"],["_","In ___ class we learn about countries and maps.","geography"]);
+Z.u3.q.push(["=","They aren't playing football now"],["_","You wear ___ in bed at night.","pyjamas"],["_","Jeans are a kind of ___.","trousers"],
+["_","A ___ is a warm top with buttons.","cardigan"],["_","A dress with stripes is ___.","patterned"],["She ___ a book in the garden now.","is reading|reads|read"]);
+Z.u4.q.push(["=","There isn't any milk in the fridge"],["_","Chips are made from ___.","potatoes"],["_","Two slices of bread with cheese inside make a ___.","sandwich"],
+["_","The ___ cooks in the restaurant kitchen.","chef"],["_","The ___ brings your food to the table.","waiter"],["_","You put ___ or diesel in a car.","petrol"],
+["There aren't ___ books about space on this shelf.","many|much|a little"]);
+Z.u5.q.push(["_","You catch a plane at the ___.","airport"],["_","You borrow books from the ___.","library"],["_","Sick people go to the ___.","hospital"],
+["_","We saw old things from history in the ___.","museum"],["_","The shop is ___ the bank, on the other side of the road.","opposite"],
+["This is the ___ book in the library. (old)","oldest|most old|olderest"]);
+Z.u6.q.push(["=","We weren't at home yesterday"],["_","A ___ flies a plane.","pilot"],["_","A ___ does experiments in a laboratory.","scientist"],
+["_","A ___ writes news stories.","journalist"],["_","An ___ travels to unknown places.","explorer"],["_","The ___ has the longest neck of all animals.","giraffe"],
+["_","An ___ travels into space in a rocket.","astronaut"]);
+Z.u7.q.push(["=","I didn't buy a new phone"],["_","You need a ___ for video calls.","webcam"],["_","You type on a ___.","keyboard"],["_","A ___ prints documents.","printer"],
+["_","You use a ___ when your phone battery is low.","charger"],["_","You listen to music with ___ so nobody else hears.","headphones"],["_","I can ___ a video from the internet to my phone.","download"],
+["He ___ a book about football last year. (write)","wrote|writed|written"]);
+Z.u8.q.push(["=","She isn't going to play today"],["_","You do ___ on the snow in winter.","skiing"],["_","You ride waves on a board when you go ___.","surfing"],
+["_","Players hit the ball over the net in ___.","volleyball"],["_","You need ___ to leave school early.","permission"],["_","A footballer kicks the ball into the ___ to score.","goal"],
+["I think this book ___ be a bestseller.","will|is|does"]);
+Z.u9.q.push(["=","I haven't finished my book yet"],["_","You look at your face in a ___.","mirror"],["_","You park your car in the ___.","garage"],
+["_","A ___ washes plates and cups.","dishwasher"],["_","You take a shower in the ___.","bathroom"],["_","Mangoes grow in ___ countries.","tropical"],
+["I have ___ finished this book. It was great!","just|yet|ever"]);
+
+// ---- gap-fill from the vocabulary coverage check ----
+Z.u0.q.push(["^","Tap: a golden instrument you blow into","🎷 saxophone|🥁 drums|🎻 violin","A saxophone is a golden instrument you blow into."],
+["^","Tap: a long thin instrument you blow across","🪈 flute|🎹 piano|🥁 drums","You blow across a flute."],["_","A ___ is a long black wind instrument.","clarinet"],
+["^","Tap: the country with Sydney","🇦🇺 Australia|🇯🇵 Japan|🇬🇷 Greece","Sydney is in Australia."]);
+Z.u1.q.push(["^","Tap: your wife's mother","👵 mother-in-law|👩 stepmother|👧 niece","Your wife's mother is your mother-in-law."],
+["^","Tap: your husband's sister","👩 sister-in-law|👧 niece|👵 grandmother","Your husband's sister is your sister-in-law."],
+["^","Tap: your wife's brother","👨 brother-in-law|👦 nephew|👨 uncle","Your wife's brother is your brother-in-law."],
+["^","Tap: your wife's father","👴 father-in-law|👨 stepfather|👴 grandfather","Your wife's father is your father-in-law."],
+["^","Tap: your brother's daughter","👧 niece|👩 aunt|👵 grandmother","Your brother's daughter is your niece."],
+["^","Tap: your sister's son","👦 nephew|👨 uncle|👦 cousin","Your sister's son is your nephew."],
+["^","Tap: your stepfather's son","👦 stepbrother|👦 cousin|👦 nephew","Your stepfather's son is your stepbrother."],
+["^","Tap: your son's daughter","👧 granddaughter|👧 niece|👩 aunt","Your son's daughter is your granddaughter."],
+["^","Tap: your mum's and dad's parents","👴 grandparents|👨 cousins|👩 aunts","Your mum's and dad's parents are your grandparents."],
+["Five ___ are in the room. (woman)","women|womans|womens"]);
+Z.u2.q.push(["I get up, wash my face and then get ___.","dressed|dress|dressing"],
+["^","Tap: the subject where you paint and draw","🎨 art and design|⚽ P.E.|➗ maths","Art and design is where you paint and draw."],
+["^","Tap: the subject about computers","💻 I.C.T.|📜 history|🎵 music","I.C.T. is the subject about computers."]);
+Z.u3.q.push(["^","Tap: a warm woollen top you pull over your head","🧶 jumper|🩳 shorts|👟 trainers","A jumper is a warm woollen top."],
+["^","Tap: a soft cotton top with long sleeves, for sport","👕 sweatshirt|🩳 shorts|🧣 scarf","A sweatshirt is a soft top for sport."],
+["The opposite of similar is ___.","different|unsimilar|nonsimilar"],["The opposite of male is ___.","female|unmale|nonmale"],
+["Is that a fake or a ___ diamond?","real|reale|rael"],["I ___ Mondays. I never want to get up!","hate|am hating|hates"],["I ___ this concert. The music is great!","enjoy|enjoys|enjoyed"]);
+Z.u4.q.push(["^","Tap: small green or black fruit you eat on pizza","🫒 olives|🍓 strawberries|🍤 prawns","Olives are small green or black fruit."],
+["^","Tap: pink seafood","🍤 prawns|🍓 strawberries|🥔 crisps","Prawns are pink seafood."],["^","Tap: a red summer fruit with tiny seeds outside","🍓 strawberries|🍋 lemons|🥦 broccoli","Strawberries are red summer fruit."],
+["^","Tap: thin fried slices of potato in a bag","🥔 crisps|🍞 bread|🧀 cheese","Crisps are thin fried slices of potato."],["I'm worried ___ my exam tomorrow.","about|of|for"]);
+Z.u5.q.push(["My aunt is ___ than my uncle. (kind)","kinder|kindder|more kind"],["Rainy days are ___ than sunny days. (wet)","wetter|weter|more wet"],
+["My brother is ___ than me after school. (hungry)","hungrier|hungryer|more hungry"],["Who is ___ on tennis, Tom or Sara? (keen)","keener|keenner|more keen"],
+["Spanish is ___ language I know. (easy)","the easiest|the most easy|the easyest"],["Is this ___ path to cycle on? (safe)","the safest|the most safe|the saferest"],
+["We live on ___ street in town. (wide)","the widest|the most wide|the widdest"],["Whose room is ___ in the house? (untidy)","the untidiest|the most untidy|the untidyest"],
+["Taking the plane is ___ way to travel. (quick)","the quickest|the most quick|the quickkest"],["Pizza is ___ food in my class. (popular)","the most popular|the popularest|the more popular"],
+["The shop is ___ the school. It's only two minutes away.","close to|between|opposite"],["The bus stop is ___ the cinema, right at the door.","in front of|behind|inside"],
+["I ___ bus to school every day.","go by|go in|take by"],["Press the button when you want to ___ the bus.","get off|get up|get on"],["We ___ for the next train on platform two.","wait for|wait to|wait at"],
+["^","Tap: the continent where China is","🌏 Asia|🌍 Africa|🧊 Antarctica","China is in Asia."],["^","Tap: the continent with Spain and Poland","🏰 Europe|🌏 Asia|🌎 South America","Spain and Poland are in Europe."],
+["^","Tap: the very cold continent at the South Pole","🧊 Antarctica|🌏 Asia|🏰 Europe","Antarctica is at the South Pole."],["^","Tap: the continent where Brazil is","🌎 South America|🌏 Asia|🏰 Europe","Brazil is in South America."],
+["^","Tap: the continent where Mexico is","🌎 North America|🌏 Asia|🧊 Antarctica","Mexico is in North America."]);
+Z.u6.q.push(["My brother ___ biology at university last year. (study)","studied|studyed|studdied"],["She ___ around Asia last summer. (travel)","travelled|traveld|travelted"],
+["I ___ to get closer to the monkeys. (want)","wanted|wantd|wantted"],["We ___ online for an hour last night. (chat)","chatted|chated|chatd"],
+["My aunt ___ a doctor in 2010. (marry)","married|maried|marryed"],["He ___ home from Africa last month. (return)","returned|returnd|returnted"],["We ___ a taxi from the airport. (share)","shared|sharred|shareed"],
+["^","Tap: big apes that live in African forests","🦍 gorillas|🐻 bears|🐺 wolves","Gorillas are big apes."],["^","Tap: tall animals that eat leaves from trees","🦒 giraffes|🐺 wolves|🐬 dolphins","Giraffes eat leaves from tall trees."],
+["^","Tap: the biggest animals in the sea","🐋 whales|🦈 sharks|🐬 dolphins","Whales are the biggest sea animals."],["^","Tap: friendly sea animals that jump and click","🐬 dolphins|🦈 sharks|🐋 whales","Dolphins jump and click."],
+["^","Tap: fish with sharp teeth and a fin on top","🦈 sharks|🐬 dolphins|🐋 whales","Sharks have sharp teeth."],["^","Tap: insects that make honey","🐝 bees|🦋 butterflies|🕷️ spiders","Bees make honey."],
+["^","Tap: insects with colourful wings","🦋 butterflies|🕷️ spiders|🐸 frogs","Butterflies have colourful wings."],["^","Tap: long animals without legs","🐍 snakes|🐸 frogs|🐻 bears","Snakes are long animals without legs."],
+["^","Tap: green animals that jump near ponds","🐸 frogs|🐍 snakes|🐻 bears","Frogs jump near ponds."],["^","Tap: big brown animals that sleep through winter","🐻 bears|🐺 wolves|🦍 gorillas","Bears sleep through winter."],
+["^","Tap: a big African animal that lives in rivers","🦛 hippo|🐘 elephant|🦒 giraffe","A hippo lives in African rivers."],["A monkey hangs from a branch by its ___.","tail|wing|paw"],
+["^","Tap: a person who works in government","🏛️ politician|🎣 fisherman|🪖 soldier","A politician works in government."]);
+Z.u7.q.push(["The two brothers ___ about the remote control. (fight)","fought|fighted|faught"],["^","Tap: you hear sound from the computer through these","🔊 speakers|🖨️ printer|📷 webcam","Speakers play sound from the computer."],
+["Shall I ___ a comment on your page?","post|delete|scan"],["You need a password to log ___.","on|off|up"],["She ___ in the wrong password. (type)","typed|typeed|typd"],
+["A video goes ___ when millions of people share it.","viral|basic|daily"],["Our class started a ___ page to collect money for a new library.","fundraising|viral|basic"],
+["Many people use social ___ every day.","media|forum|account"]);
+Z.u8.q.push(["^","Tap: you do flips and handstands on mats","🤸 gymnastics|⛳ golf|🧘 yoga","Gymnastics has flips and handstands."],["^","Tap: you hit a small ball over a net with a bat","🏓 table tennis|🏐 volleyball|⛳ golf","You play table tennis with small bats."],
+["^","Tap: running, jumping and throwing events","🏃 athletics|⛳ golf|🧘 yoga","Athletics has running, jumping and throwing."],["^","Tap: two teams throw a ball into a goal with their hands","🤾 handball|🏐 volleyball|⛳ golf","In handball you throw the ball into a goal."],
+["We need to find student ___ near the university. (accommodate)","accommodation|accommodement|accomodation"],["I could hear strange sounds in the ___. (dark)","darkness|darkment|darkion"],
+["I saw a great ___ on TV for a new phone. (advertise)","advertisement|advertisation|advertisment"],["We had a long ___ about football. (converse)","conversation|conversion|conversment"],
+["A person from Russia is ___.","Russian|Russish|Russer"],["A person from Spain is ___.","Spanish|Spainian|Spainer"],["A person from Canada is ___.","Canadian|Canadan|Canadish"]);
+Z.u9.q.push(["^","Tap: it covers part of the floor","🟫 rug|🪞 mirror|💡 lamp","A rug covers part of the floor."],["^","Tap: you close them over the window at night","🪟 curtains|🛋️ sofa|🚰 sink","Curtains hang over the window."],
+["^","Tap: they go up and down in front of the window","🪟 blinds|🛁 bath|🚰 sink","Blinds go up and down."],["^","Tap: a small seat with no back","🪑 stool|🛋️ sofa|🛏️ bed","A stool is a small seat with no back."],
+["^","Tap: the room where the family watches TV and relaxes","🛋️ living room|🍳 kitchen|🚗 garage","The family relaxes in the living room."],
+["We have two ___ in our house: one upstairs and one downstairs.","toilets|bins|rugs"],["My ___ neighbour lives in the house right beside ours.","next-door|sandy|tropical"]);
+const $=id=>document.getElementById(id),app=$('app'),sh=a=>[...a].sort(()=>Math.random()-.5),rn=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const NM=["Ninja","Tiger","Pixel","Rocket","Panda","Falcon","Zed","Mango"];
+// ---- music: chill modern lo-fi pop loop (~100 BPM) ----
+let ac,mg,lp,nb,on=true,stp=0,tm1;
+const CH=[[220,261.6,329.6,392],[174.6,220,261.6,329.6],[261.6,329.6,392,493.9],[196,246.9,293.7,392]],RT=[110,87.3,130.8,98],PEN=[523.25,587.33,659.25,783.99,880],PT=[0,-1,2,-1,4,-1,2,0,-1,-1,3,-1,2,-1,-1,-1];
+function nt(f,d,ty,v,f2,at){const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+(at||0);o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+Math.min(.03,d/3));g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(lp);o.start(t);o.stop(t+d+.05)}
+function nz(d,v,hp){const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain(),t=ac.currentTime;s.buffer=nb;f.type='highpass';f.frequency.value=hp;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(f);f.connect(g);g.connect(lp);s.start(t);s.stop(t+d)}
+function tick(){if(!on)return;const n=stp++%64,bar=n>>4,s=n%16;
+ if(s===0)CH[bar].forEach((f,k)=>nt(f,2,'triangle',.05,0,k*.02));
+ if(s%4===0)nt(120,.2,'sine',.36,42);
+ if(s===4||s===12)nz(.12,.09,1800);
+ if(s%2===1)nz(.04,.03,7000);if(s===2||s===6||s===10||s===14)nt(CH[bar][2]*2,.12,'square',.015);
+ if(s===0||s===6||s===8||s===11)nt(RT[bar],.35,'sine',.26);
+ if(PT[s]>=0){const f=PEN[(PT[s]+bar)%5];nt(f,.35,'triangle',.12);nt(f*2,.2,'sine',.03)}}
+function mus(){try{if(!ac){ac=new(window.AudioContext||window.webkitAudioContext)();mg=ac.createGain();mg.gain.value=.6;mg.connect(ac.destination);
+ lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;lp.connect(mg);
+ const dl=ac.createDelay(),fb=ac.createGain(),wet=ac.createGain();dl.delayTime.value=.27;fb.gain.value=.3;wet.gain.value=.22;lp.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(mg);
+ nb=ac.createBuffer(1,ac.sampleRate*.3,ac.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+ ac.resume();if(!tm1)tm1=setInterval(tick,150)}catch(e){}}
+function sfx(ok){if(!ac||!on)return;if(ok){nt(784,.25,'sine',.2);nt(1175,.35,'sine',.18,0,.1)}else nt(220,.4,'triangle',.2,130)}
+$('mu').onclick=()=>{on=!on;$('mu').textContent=on?'🔊':'🔇';if(on)mus()};
+// ---- screens ----
+let S;
+const SEC={1:"Section 1 · Units 1–5",2:"Section 2 · Units 6–9"};
+function home(){clearInterval(S&&S.iv);
+ app.innerHTML=`<h1>🪂 GRAMMAR ROYALE</h1><p class="sub">Solutions Elementary · 100 players drop in. Be the last one standing!</p>${stats()}`+
+ [1,2].map(n=>`<button class="zone big" data-m="S${n}">⚔️ BATTLE · ${SEC[n]}</button>`+Object.keys(Z).sort().filter(k=>Z[k].s===n).map(k=>`<button class="zone" data-m="${k}">${Z[k].i} ${Z[k].n}<small>${Z[k].d}</small></button>`).join('')).join('<p class="sub" style="margin-top:14px">— — —</p>');
+ document.querySelectorAll('.zone').forEach(b=>b.onclick=()=>{mus();go(b.dataset.m)})}
+function go(m){const all=Object.values(Z).filter(z=>m==='S'+z.s).flatMap(z=>z.q);
+ S={m,l:draw(m,all),i:0,xp:0,hp:100,sd:0,al:100,cb:0,best:0,ok:0,lock:false};round()}
+function hud(){return `<div class="hud"><span class="pill">👥 ${S.al}</span><div class="hp"><i style="width:${S.hp}%"></i></div><span class="pill">🛡️${S.sd}</span><span class="pill">🔥${S.cb}</span><span class="pill">⭐${S.xp}</span></div><div class="zt"><i id="tb"></i></div>`}
+function round(){
+ if(S.i>=S.l.length||S.hp<=0)return end();
+ S.lock=false;const d=S.l[S.i],t=d[0];let b='';
+ const tag=`<div class="tag">ZONE ${S.i+1}/${S.l.length}</div>`;
+ if(t==='=')b=`${tag}<div class="q">Build the sentence!</div><div class="line" id="ln"></div><div class="line" id="tl" style="border:0"></div>`;
+ else if(t==='~')b=`${tag}<div class="q">Sort it: <b style="color:var(--acc)">${d[1]}</b></div><div id="op"></div>`;
+ else if(t==='_')b=`${tag}<div class="q">Spell it! ✍️</div><div class="q" style="font-size:19px">${d[1].replace('___','<b style="color:var(--acc)">_____</b>')}</div><div class="line" id="ln"></div><div class="line" id="tl" style="border:0"></div>`;
+ else if(t==='!')b=`${tag}<div class="q">Find the mistake! 🔎</div><div class="line" id="ln" style="border:0"></div>`;
+ else if(t==='?')b=`${tag}<div class="q">Odd one out!</div><div id="op"></div>`;
+ else if(t==='^')b=`${tag}<div class="q">${d[1]}</div><div class="row" id="op"></div>`;
+ else b=`${tag}<div class="q">${d[0].replace('___','<b style="color:var(--acc)">_____</b>')}</div><div id="op"></div>`;
+ app.innerHTML=hud()+`<div class="card" id="cd">${b}<div id="fb"></div></div>`;
+ const H={'=':bld,'~':srt,'^':pic,'!':mis,'?':odd,'_':spl};(H[t]||cho)(d);
+ clearInterval(S.iv);S.t=20;S.iv=setInterval(()=>{S.t-=.1;const e=$('tb');if(e)e.style.width=S.t*5+'%';if(S.t<=0&&!S.lock)fin(0,S.ans)},100)}
+function btn(txt,cls,fn){const x=document.createElement('button');x.className=cls;x.innerHTML=txt;x.onclick=()=>{if(!S.lock)fn(x)};return x}
+function opts(arr,ans,sen,cls){const o=$('op');const L=sh(arr.map((v,k)=>({v,k})));S.ans=sen;
+ L.forEach(x=>{const b=btn(x.v,cls,b=>{b.classList.add(x.k===ans?'ok':'bad');if(x.k!==ans)[...o.children].forEach((c,n)=>{if(L[n].k===ans)c.classList.add('ok')});fin(x.k===ans,sen)});o.appendChild(b)})}
+function spl(d){const w=d[2],ln=$('ln'),tl=$('tl'),pl=[];let pool=sh([...w.slice(1)].map((v,k)=>({v,k})));S.ans=d[1].replace('___',w);
+ const mk=v=>{const b=document.createElement('button');b.className='tile';b.textContent=v;return b};
+ const draw=()=>{ln.innerHTML='';tl.innerHTML='';const f=mk(w[0]);f.style.opacity=.6;ln.appendChild(f);
+  pl.forEach((x,n)=>{const b=mk(x.v);b.onclick=()=>{if(S.lock)return;pool.push(pl.splice(n,1)[0]);draw()};ln.appendChild(b)});
+  pool.forEach(x=>{const b=mk(x.v);b.onclick=()=>{if(S.lock)return;pl.push(pool.splice(pool.indexOf(x),1)[0]);draw();
+   if(!pool.length){const ok=w[0]+pl.map(y=>y.v).join('')===w;if(ok)ln.querySelectorAll('.tile').forEach(t=>t.classList.add('ok'));fin(ok,S.ans)}};tl.appendChild(b)})};draw()}
+function mis(d){const ln=$('ln'),cl=x=>x.replace(/[.,?!]/g,'');S.ans=d[3];
+ d[1].split(' ').forEach(w=>ln.appendChild(btn(w,'tile',b=>{const ok=cl(w)===d[2];b.classList.add(ok?'ok':'bad');
+  if(!ok)[...ln.children].forEach(c=>{if(cl(c.textContent)===d[2])c.classList.add('ok')});fin(ok,d[3])})))}
+function odd(d){opts(d[1].split('|'),0,d[2],'opt')}
+function cho(d){const o=d[1].split('|');opts(o,0,d[0].replace('___',o[0]),'opt')}
+function srt(d){S.ans=d[1]+' is '+['countable (apples, tomatoes...)','uncountable (no plural: beef, pasta, cheese...)'][d[2]];
+ const o=$('op');['🍓 Countable','🧀 Uncountable'].forEach((t,k)=>o.appendChild(btn(t,'opt',b=>{b.classList.add(k===d[2]?'ok':'bad');fin(k===d[2],S.ans)})))}
+function pic(d){const o=d[2].split('|');S.ans=d[3];const L=sh(o.map((v,k)=>({v,k})));
+ L.forEach(x=>{const p=x.v.split(' ');const b=btn(p[0]+'<small>'+p.slice(1).join(' ')+'</small>','opt',b=>{b.classList.add(x.k===0?'ok':'bad');if(x.k)[...$('op').children].forEach((c,n)=>{if(L[n].k===0)c.classList.add('ok')});fin(x.k===0,d[3])});$('op').appendChild(b)})}
+function bld(d){const w=d[1].split(' '),pl=[],ln=$('ln'),tl=$('tl');let pool=sh(w.map((v,k)=>({v,k})));S.ans=d[1];
+ const mk=v=>{const b=document.createElement('button');b.className='tile';b.textContent=v;return b};
+ const draw=()=>{ln.innerHTML='';tl.innerHTML='';
+  pl.forEach((x,n)=>{const b=mk(x.v);b.onclick=()=>{if(S.lock)return;pool.push(pl.splice(n,1)[0]);draw()};ln.appendChild(b)});
+  pool.forEach(x=>{const b=mk(x.v);b.onclick=()=>{if(S.lock)return;pl.push(pool.splice(pool.indexOf(x),1)[0]);draw();
+   if(!pool.length){const ok=pl.map(y=>y.v).join(' ')===d[1];if(ok)ln.querySelectorAll('.tile').forEach(t=>t.classList.add('ok'));fin(ok,d[1])}};tl.appendChild(b)})};draw()}
+function fin(ok,sen){
+ S.lock=true;clearInterval(S.iv);let msg='';
+ if(ok){S.cb++;S.ok++;S.best=Math.max(S.best,S.cb);S.xp+=10*Math.min(S.cb,5);S.al=Math.max(1,S.al-rn(7,11));sfx(1);
+  if(S.cb%3===0){const r=rn(0,1);if(r){S.sd++;msg='📦 Loot crate: +1 🛡️ Shield!'}else{S.hp=Math.min(100,S.hp+25);msg='📦 Loot crate: +25 ❤️ Health!'}}}
+ else{S.cb=0;S.al=Math.max(1,S.al-rn(1,3));sfx(0);$('cd').classList.add('shake');
+  if(S.sd>0){S.sd--;msg='🛡️ Shield saved you!'}else S.hp-=25}
+ const f=`${NM[rn(0,7)]}${rn(10,99)} left the zone 🌀`;
+ $('fb').innerHTML=`<div class="fb">${ok?'✅ Nice!':'❌ The answer:'} ${sen}<br>🗣️ Say it out loud!<div class="feed">${msg?msg+'<br>':''}${f}</div></div><button class="main" id="nx">${S.i<S.l.length-1&&S.hp>0?'NEXT ➜':'FINISH'}</button>`;
+ $('nx').onclick=()=>{S.i++;round()}}
+function end(){clearInterval(S.iv);const r=S.hp>0?Math.max(1,S.al):S.al,w=r===1;T.xp+=S.xp;T.g++;T.ok+=S.ok;T.n+=S.i;T.best=T.best?Math.min(T.best,r):r;
+ app.innerHTML=`<div class="card center"><div class="huge">${w?'🏆':r<=10?'🥇':S.hp>0?'🎖️':'💔'}</div><h1>${w?'#1 CHAMPION!':r<=10?'TOP 10!':S.hp>0?'You survived!':'Eliminated'}</h1>
+ <p style="font-size:26px">Rank <b style="color:var(--acc)">#${r}</b> / 100</p><p class="sub">Correct: ${S.ok}/${S.l.length} · Best streak 🔥${S.best} · XP ⭐${S.xp}</p><p class="sub">Overall: ⭐${T.xp} XP · Level ${Math.floor(T.xp/200)+1}</p>
+ <button class="main" id="a1">DROP AGAIN</button> <button class="main" id="a2">MENU</button></div>`;
+ $('a1').onclick=()=>go(S.m);$('a2').onclick=home}
+home();
+</script></body></html>
